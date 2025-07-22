@@ -15,40 +15,47 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# Charger le modèle
-model = joblib.load('best_model2.pkl')
+# Load the trained model and preprocessor
+model = joblib.load('/Users/harold/DataAnalyctisandScience/AnalysisPredictionKenyanCrops/best_model2.pkl')
+preprocessor = joblib.load('/Users/harold/DataAnalyctisandScience/AnalysisPredictionKenyanCrops/best_model2.pkl')  # Ensure you have saved the original ColumnTransformer
 
-# Titre de l'application
-st.title("Prédiction des prix des cultures au Kenya")
+# App title
+st.title("Kenyan Crop Price Prediction")
+st.markdown("Enter the details below to predict the price (in KES and FCFA).")
 
-st.markdown("Entrez les paramètres ci-dessous pour prédire le prix (en KES).")
+# User input form
+commodity = st.selectbox("Crop Type (Commodity)", [
+    "Cabbages", "Tomatoes", "Carrots", "Ripe Bananas", "Kales",
+    "Cooking Bananas", "Mangoes Local", "Avocado", "Beans Rosecoco", "Wheat"])
+unit = st.selectbox("Packaging Unit", [
+    "Bag", "Lg Box", "Ext Bag", "Med Bunch", "Sm Basket"])
+package_weight = st.slider("Package Weight (kg)", min_value=1, max_value=150, value=90)
+month = st.slider("Month", 1, 12, 1)
+year = st.selectbox("Year", [2016])
+volume = st.number_input("Total Volume in Kilograms (kg)", min_value=1, max_value=2000, value=100)
 
-# Formulaire utilisateur
-commodity = st.selectbox("Type de culture (Commodity)", ["Cabbages", "Tomatoes", "Carrots", "Ripe Bananas", "Kales"])
-unit = st.selectbox("Unité", ["Bag", "Lg Box", "Ext Bag"])
-month = st.slider("Mois", 1, 12, 1)
-year = st.selectbox("Année", [2016, 2017])
-volume = st.number_input("Volume en kilogrammes (kg)", min_value=1, max_value=1000, value=100)
-
-# Prédire le prix
-if st.button("Prédire le prix"):
-    # Création d'un DataFrame avec les entrées utilisateur
+# Make prediction
+if st.button("Predict Price"):
+    # Create a DataFrame with user inputs
     input_data = pd.DataFrame({
         "Commodity_Type": [commodity],
         "Unit": [unit],
         "Month": [month],
         "Year": [year],
-        "Volume_in_Kgs": [volume]
+        "Volume_in_Kgs": [volume],
+        "package_weight(Kg)": [package_weight]
     })
 
-    # Prédiction
-    predicted_price = model.predict(input_data)[0]
+    try:
+        # Apply preprocessing (same as used during training)
+        transformed_input = preprocessor.transform(input_data)
 
-    # Conversion en FCFA
-    price_fcfa = predicted_price * 4.5
+        # Predict
+        predicted_price = model.predict(transformed_input)[0]
+        price_fcfa = predicted_price * 4.5  # Rough KES to FCFA conversion
 
-    # Affichage des résultats
-    st.success(f"Prix prédit (en KES) : {predicted_price:,.2f} KES")
-    st.info(f"Prix équivalent (en FCFA) : {price_fcfa:,.2f} FCFA")
-
-
+        # Display results
+        st.success(f"💰 Predicted Price (in KES): {predicted_price:,.2f} KES")
+        st.info(f"💱 Equivalent Price (in FCFA): {price_fcfa:,.2f} FCFA")
+    except Exception as e:
+        st.error(f"Prediction error: {str(e)}")

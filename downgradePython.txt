@@ -1,0 +1,9 @@
+# Install Python 3.11 using Homebrew
+brew install python@3.11
+
+# Create a new virtual environment with Python 3.11
+python3.11 -m venv venv
+source venv/bin/activate
+
+# Install your requirements
+pip install -r requirements.txt
