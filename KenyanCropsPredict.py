@@ -75,7 +75,7 @@ st.markdown("""
             font-size: 18px;
         }
         .main {
-            background-color: black;
+            background-color: white;
         }
         h1, h4, .stMarkdown, .stSelectbox, .stSlider, .stNumberInput, .stButton {
             font-family: 'Segoe UI', sans-serif;
@@ -199,5 +199,3 @@ if submitted:
         )
     except Exception as e:
         st.error(f"Prediction error: {str(e)}")
-
-
