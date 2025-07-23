@@ -75,7 +75,7 @@ st.markdown("""
             font-size: 18px;
         }
         .main {
-            background-color: black;
+            background-color: white;
         }
         h1, h4, .stMarkdown, .stSelectbox, .stSlider, .stNumberInput, .stButton {
             font-family: 'Segoe UI', sans-serif;
@@ -94,22 +94,71 @@ st.markdown("<h1 style='text-align: center;'>🌾 Kenyan Crop Price Predictor</h
 st.markdown("<h4 style='text-align: center; color: red;'>Estimate market price in KES & FCFA</h4>", unsafe_allow_html=True)
 st.write("---")
 
+allowed_units_mapping = {
+    ('Cereals', 'Dry Maize'): ['Bag', 'Net'],
+    ('Cereals', 'Green Maize'): ['Bag'],
+    ('Cereals', 'Finger Millet'): ['Bag'],
+    ('Cereals', 'Sorghum'): ['Bag'],
+    ('Cereals', 'Wheat'): ['Bag'],
+    ('Horticulture', 'Cabbages'): ['Crate', 'Sm Basket'],
+    ('Horticulture', 'Cooking Bananas'): ['Med Bunch'],
+    ('Horticulture', 'Ripe Bananas'): ['Med Bunch'],
+    ('Horticulture', 'Carrots'): ['Bag', 'Sm Basket'],
+    ('Horticulture', 'Tomatoes'): ['Crate', 'Lg Box'],
+    ('Horticulture', 'Onions Dry'): ['Bag', 'Net'],
+    ('Horticulture', 'Spring Onions'): ['Sm Basket'],
+    ('Horticulture', 'Chillies'): ['Bag'],
+    ('Horticulture', 'Cucumber'): ['Crate'],
+    ('Horticulture', 'Capsicums'): ['Crate'],
+    ('Horticulture', 'Brinjals'): ['Crate'],
+    ('Horticulture', 'Cauliflower'): ['Crate'],
+    ('Horticulture', 'Lettuce'): ['Crate'],
+    ('Horticulture', 'Passion Fruits'): ['Bag'],
+    ('Horticulture', 'Oranges'): ['Bag'],
+    ('Horticulture', 'Lemons'): ['Bag'],
+    ('Horticulture', 'Mangoes Local'): ['Bag'],
+    ('Horticulture', 'Mangoes Ngowe'): ['Bag'],
+    ('Horticulture', 'Limes'): ['Bag'],
+    ('Horticulture', 'Pineapples'): ['Bag'],
+    ('Horticulture', 'Pawpaw'): ['Bag'],
+    ('Horticulture', 'Avocado'): ['Bag'],
+    ('Horticulture', 'Kales'): ['Bag'],
+    ('Legumes', 'Beans Canadian'): ['Bag'],
+    ('Legumes', 'Beans Rosecoco'): ['Bag'],
+    ('Legumes', 'Beans Mwitemania'): ['Bag'],
+    ('Legumes', 'Mwezi Moja'): ['Bag'],
+    ('Legumes', 'Dolichos (Njahi)'): ['Bag'],
+    ('Legumes', 'Green Gram'): ['Bag'],
+    ('Legumes', 'Cowpeas'): ['Bag'],
+    ('Legumes', 'Fresh Peas'): ['Bag'],
+    ('Legumes', 'Groundnuts'): ['Bag'],
+    ('Roots & Tubers', 'Red Irish Potatoes'): ['Bag', 'Net'],
+    ('Roots & Tubers', 'White Irish Potatoes'): ['Bag', 'Net'],
+    ('Roots & Tubers', 'Cassava Fresh'): ['Bag'],
+    ('Roots & Tubers', 'Sweet Potatoes'): ['Bag'],
+}
+
 # Sidebar Inputs
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/415/415733.png", width=100)
 st.sidebar.header("🔧 Prediction Parameters")
 
-with st.sidebar.form("input_form"):
-    category = st.selectbox("Produce Variety Category", list(produce_variety_mapping.keys()))
-    commodity = st.selectbox("Commodity Type", list(produce_variety_mapping[category].keys()))
-    commodity_id = produce_variety_mapping[category][commodity]
-    produce_variety_id = produce_variety_map[category]
+category = st.sidebar.selectbox("Produce Variety Category", list(produce_variety_mapping.keys()))
+commodity_options = list(produce_variety_mapping[category].keys())
+commodity = st.sidebar.selectbox("Commodity Type", commodity_options)
 
-    unit = st.selectbox("Unit Type", list(unit_map.keys()))
+# Get allowed units for selected category and commodity
+allowed_units = allowed_units_mapping.get((category, commodity), list(unit_map.keys()))
+
+with st.sidebar.form("input_form"):
+    unit = st.selectbox("Unit Type", allowed_units)
     unit_id = unit_map[unit]
 
     month = st.slider("Month", 1, 12, 6)
     year = st.selectbox("Year", [2016, 2017, 2018, 2019])
     volume = st.number_input("Volume in Kilograms (kg)", min_value=1, max_value=1000, value=100)
+
+    commodity_id = produce_variety_mapping[category][commodity]
+    produce_variety_id = produce_variety_map[category]
 
     submitted = st.form_submit_button("🔮 Predict")
 
@@ -134,24 +183,19 @@ if submitted:
 
         st.success("✅ Prediction Successful!")
         st.markdown("### 📊 Results")
-        # col1, col2 = st.columns(2)
-        # col1.metric("🇰🇪 Price (KES)", f"{predicted_price:,.2f} KES")
-        # col2.metric("🇨🇮 Equivalent (FCFA)", f"{price_fcfa:,.2f} FCFA")
-        # style_metric_cards()
 
         col1, col2 = st.columns(2)
 
         col1.metric(
-        label="🇰🇪 Prix prédit (KES)",
-        value=f"{predicted_price:,.2f} KES",
-        delta="Estimation"
+            label="🇰🇪 Prix prédit (KES)",
+            value=f"{predicted_price:,.2f} KES",
+            delta="Estimation"
         )
 
         col2.metric(
-        label="🇨🇮 Équivalent (FCFA)",
-        value=f"{price_fcfa:,.2f} FCFA",
-        delta="~x4.5"
+            label="🇨🇮 Équivalent (FCFA)",
+            value=f"{price_fcfa:,.2f} FCFA",
+            delta="~x4.5"
         )
     except Exception as e:
-     st.error(f"Prediction error: {str(e)}")
-
+        st.error(f"Prediction error: {str(e)}")
